@@ -6,7 +6,7 @@ import { parse } from "papaparse";
 
 import Activities from "./components/Activities";
 
-export async function getActivities() {
+async function getActivities() {
   const filePath = path.join(process.cwd(), "db", "db.csv");
   const fileContent = await fs.readFile(filePath, "utf-8");
   const data = parse(fileContent, { header: true }).data;
