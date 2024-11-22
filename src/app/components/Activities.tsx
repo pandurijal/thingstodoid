@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState, useEffect } from "react";
-import Image from "next/image";
+// import Image from "next/image";
 import Link from "next/link";
 import { Search, Star, MapPin, Clock, Tag } from "lucide-react";
 
@@ -90,7 +90,7 @@ export default function Activities({ activities }: { activities: any[] }) {
             className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
           >
             <div className="aspect-video bg-gray-100 relative">
-              {act.image && (
+              {/* {act.image && (
                 <Image
                   src={`/images/${act.image}`}
                   alt={act.activity}
@@ -105,9 +105,9 @@ export default function Activities({ activities }: { activities: any[] }) {
                     );
                   }}
                 />
-              )}
+              )} */}
               <div 
-                className={`w-full h-full bg-gray-100 flex justify-center items-center ${act.image ? 'hidden' : ''}`}
+                className={`w-full h-full bg-gray-100 flex justify-center items-center`}
                 style={{ display: act.image ? 'none' : 'flex' }}
               >
                 <p className="text-gray-400">No Image</p>
