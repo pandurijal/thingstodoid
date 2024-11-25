@@ -22,6 +22,19 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
+// Add this interface above the getActivities function
+interface RawActivityData {
+  id: string | undefined;
+  activity: string | undefined;
+  localName: string | undefined;
+  description: string | undefined;
+  location: string | undefined;
+  duration: string | undefined;
+  tags: string | undefined;
+  rating: string | undefined;
+  image?: string | undefined;
+}
+
 async function getActivities(): Promise<Activity[]> {
   try {
     const filePath = path.join(process.cwd(), "db", "db.csv");
@@ -36,18 +49,21 @@ async function getActivities(): Promise<Activity[]> {
       },
     });
 
-    // Type assertion and validation
-    const activities = (parsedData.data as unknown[]).map((item: any) => ({
-      id: String(item.id || ""),
-      activity: String(item.activity || ""),
-      localName: String(item.localName || ""),
-      description: String(item.description || ""),
-      location: String(item.location || ""),
-      duration: String(item.duration || ""),
-      tags: String(item.tags || ""),
-      rating: Number(item.rating) || 0,
-      image: item.image ? String(item.image) : undefined,
-    }));
+    // Update the type assertion and validation
+    const activities = (parsedData.data as unknown[]).map((item: unknown) => {
+      const rawItem = item as RawActivityData;
+      return {
+        id: String(rawItem.id || ""),
+        activity: String(rawItem.activity || ""),
+        localName: String(rawItem.localName || ""),
+        description: String(rawItem.description || ""),
+        location: String(rawItem.location || ""),
+        duration: String(rawItem.duration || ""),
+        tags: String(rawItem.tags || ""),
+        rating: Number(rawItem.rating) || 0,
+        image: rawItem.image ? String(rawItem.image) : undefined,
+      };
+    });
 
     return activities;
   } catch (error) {

@@ -232,7 +232,7 @@ export default function Activities({ activities }: { activities: Activity[] }) {
     } else if (!cityFromUrl && location !== "all") {
       setLocation("all");
     }
-  }, [searchParams]);
+  }, [searchParams, location]);
 
   const observer = useRef<IntersectionObserver>();
   const lastActivityElementRef = useCallback(
