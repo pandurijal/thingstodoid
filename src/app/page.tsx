@@ -50,20 +50,19 @@ async function getActivities(): Promise<Activity[]> {
     });
 
     // Update the type assertion and validation
-    const activities = (parsedData.data as unknown[]).map((item: unknown) => {
-      const rawItem = item as RawActivityData;
-      return {
-        id: String(rawItem.id || ""),
-        activity: String(rawItem.activity || ""),
-        localName: String(rawItem.localName || ""),
-        description: String(rawItem.description || ""),
-        location: String(rawItem.location || ""),
-        duration: String(rawItem.duration || ""),
-        tags: String(rawItem.tags || ""),
-        rating: Number(rawItem.rating) || 0,
-        image: rawItem.image ? String(rawItem.image) : undefined,
-      };
-    });
+    const activities = (parsedData.data as unknown[]).map(
+      (item: RawActivityData) => ({
+        id: String(item.id || ""),
+        activity: String(item.activity || ""),
+        localName: String(item.localName || ""),
+        description: String(item.description || ""),
+        location: String(item.location || ""),
+        duration: String(item.duration || ""),
+        tags: String(item.tags || ""),
+        rating: Number(item.rating) || 0,
+        image: item.image ? String(item.image) : undefined,
+      })
+    );
 
     return activities;
   } catch (error) {
