@@ -25,6 +25,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          defer
+          src="https://umami-pr-red-log-4947.fly.dev/script.js"
+          data-website-id="c720f42b-8a43-4de6-847c-70aa2b12e4e4"
+        ></script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
