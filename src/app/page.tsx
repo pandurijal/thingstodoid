@@ -1,4 +1,3 @@
-// page.tsx
 import Link from "next/link";
 import path from "path";
 import fs from "fs/promises";
@@ -22,7 +21,6 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-// Add this interface above the getActivities function
 interface RawActivityData {
   id: string | undefined;
   activity: string | undefined;
@@ -33,6 +31,16 @@ interface RawActivityData {
   tags: string | undefined;
   rating: string | undefined;
   image?: string | undefined;
+}
+
+// Fisher-Yates shuffle algorithm
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 async function getActivities(): Promise<Activity[]> {
@@ -64,7 +72,15 @@ async function getActivities(): Promise<Activity[]> {
       };
     });
 
-    return activities.sort((a, b) => b.rating - a.rating);
+    // Sort by rating first to get top-rated items
+    const sortedActivities = activities.sort((a, b) => b.rating - a.rating);
+
+    // Get top 30% of activities to maintain quality
+    const topActivitiesCount = Math.ceil(sortedActivities.length * 0.3);
+    const topActivities = sortedActivities.slice(0, topActivitiesCount);
+
+    // Randomize only the top-rated activities
+    return shuffleArray(topActivities);
   } catch (error) {
     console.error("Error reading or parsing activities:", error);
     return [];
@@ -185,14 +201,13 @@ export default async function Home({ searchParams }: Props) {
               thingstodo<span className="text-sm text-gray-500">.id</span>
             </Link>
             <div className="text-sm text-gray-500">
-              {totalActivities} activities in {locationOptions.length} cities
+              {totalActivities} activities in {locationOptions.length} locations
             </div>
           </div>
         </div>
       </nav>
 
       <main className="w-7xl mx-8 px-4 sm:px-6 lg:px-8 py-8 flex-grow">
-        {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             {city ? (
