@@ -28,8 +28,8 @@ export default function RootLayout({
       <head>
         <script
           defer
-          src="https://umami-pr-red-log-4947.fly.dev/script.js"
-          data-website-id="c720f42b-8a43-4de6-847c-70aa2b12e4e4"
+          src="https://umami-pr.up.railway.app/script.js"
+          data-website-id="02329325-db62-43e4-8d98-9c5c2e490e6c"
         ></script>
       </head>
       <body
