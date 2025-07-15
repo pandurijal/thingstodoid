@@ -1,9 +1,9 @@
+"use client";
 import Link from "next/link";
-import path from "path";
-import fs from "fs/promises";
-import { parse } from "papaparse";
 import Activities from "./components/Activities";
-import { Metadata } from "next";
+import { useState, useEffect, Suspense } from "react";
+import { parse } from "papaparse";
+import { useSearchParams } from "next/navigation";
 
 export type Activity = {
   id: string;
@@ -17,9 +17,6 @@ export type Activity = {
   image?: string;
 };
 
-type Props = {
-  searchParams: { [key: string]: string | string[] | undefined };
-};
 
 interface RawActivityData {
   id: string | undefined;
@@ -43,144 +40,63 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-async function getActivities(): Promise<Activity[]> {
-  try {
-    const filePath = path.join(process.cwd(), "db", "db.csv");
-    const fileContent = await fs.readFile(filePath, "utf-8");
-    const parsedData = parse(fileContent, {
-      header: true,
-      transform: (value, field) => {
-        if (field === "rating") {
-          return parseFloat(value) || 0;
-        }
-        return value || "";
-      },
-    });
 
-    const activities = (parsedData.data as unknown[]).map((item: unknown) => {
-      const rawItem = item as RawActivityData;
-      return {
-        id: String(rawItem.id || ""),
-        activity: String(rawItem.activity || ""),
-        localName: String(rawItem.localName || ""),
-        description: String(rawItem.description || ""),
-        location: String(rawItem.location || ""),
-        duration: String(rawItem.duration || ""),
-        tags: String(rawItem.tags || ""),
-        rating: Number(rawItem.rating) || 0,
-        image: rawItem.image ? String(rawItem.image) : undefined,
-      };
-    });
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const city = searchParams.get('city');
 
-    // Sort by rating first to get top-rated items
-    const sortedActivities = activities.sort((a, b) => b.rating - a.rating);
+  useEffect(() => {
+    async function fetchActivities() {
+      try {
+        const response = await fetch('/activities.csv');
+        const csvText = await response.text();
+        const parsedData = parse(csvText, {
+          header: true,
+          transform: (value, field) => {
+            if (field === "rating") {
+              return parseFloat(value) || 0;
+            }
+            return value || "";
+          },
+        });
 
-    // Get top 30% of activities to maintain quality
-    const topActivitiesCount = Math.ceil(sortedActivities.length * 0.3);
-    const topActivities = sortedActivities.slice(0, topActivitiesCount);
+        const activitiesData = (parsedData.data as unknown[]).map((item: unknown) => {
+          const rawItem = item as RawActivityData;
+          return {
+            id: String(rawItem.id || ""),
+            activity: String(rawItem.activity || ""),
+            localName: String(rawItem.localName || ""),
+            description: String(rawItem.description || ""),
+            location: String(rawItem.location || ""),
+            duration: String(rawItem.duration || ""),
+            tags: String(rawItem.tags || ""),
+            rating: Number(rawItem.rating) || 0,
+            image: rawItem.image ? String(rawItem.image) : undefined,
+          };
+        });
 
-    // Randomize only the top-rated activities
-    return shuffleArray(topActivities);
-  } catch (error) {
-    console.error("Error reading or parsing activities:", error);
-    return [];
-  }
-}
+        // Sort by rating first to get top-rated items
+        const sortedActivities = activitiesData.sort((a, b) => b.rating - a.rating);
 
-export async function generateMetadata({
-  searchParams,
-}: Props): Promise<Metadata> {
-  const city = searchParams.city as string;
+        // Get top 30% of activities to maintain quality
+        const topActivitiesCount = Math.ceil(sortedActivities.length * 0.3);
+        const topActivities = sortedActivities.slice(0, topActivitiesCount);
 
-  const baseTitle = "ThingsToDo.id - Find the Best Activities in Indonesia";
-  const baseDescription =
-    "Discover amazing activities, cultural experiences, and hidden gems across the Indonesian archipelago";
+        // Randomize only the top-rated activities
+        setActivities(shuffleArray(topActivities));
+      } catch (error) {
+        console.error("Error loading activities:", error);
+        setActivities([]);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const title = city
-    ? `Things To Do in ${city} - Best Activities and Experiences`
-    : baseTitle;
-
-  const description = city
-    ? `Discover the best activities, cultural experiences, and hidden gems in ${city}. Find top-rated things to do and plan your perfect trip.`
-    : baseDescription;
-
-  const canonicalPath = city ? `?city=${encodeURIComponent(city)}` : "";
-
-  return {
-    title,
-    description,
-    keywords: [
-      "Indonesia",
-      "travel",
-      "activities",
-      "tourism",
-      "cultural experiences",
-      "things to do",
-      ...(city
-        ? [`${city} activities`, `things to do in ${city}`, `${city} tourism`]
-        : []),
-    ],
-    openGraph: {
-      title,
-      description,
-      url: `https://thingstodo.id${canonicalPath}`,
-      siteName: "ThingsToDo.id",
-      images: [
-        {
-          url: "/og-image.jpg",
-          width: 1200,
-          height: 630,
-          alt: `ThingsToDo.id - ${city || "Indonesia"} Preview`,
-        },
-      ],
-      locale: "en_US",
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: ["/og-image.jpg"],
-    },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        "max-video-preview": -1,
-        "max-image-preview": "large",
-        "max-snippet": -1,
-      },
-    },
-    icons: {
-      icon: "/favicon.ico",
-      shortcut: "/favicon.ico",
-      apple: "/apple-touch-icon.png",
-      other: [
-        {
-          rel: "apple-touch-icon-precomposed",
-          url: "/apple-touch-icon-precomposed.png",
-        },
-      ],
-    },
-    verification: {
-      google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
-      yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
-    },
-    alternates: {
-      canonical: `https://thingstodo.id${canonicalPath}`,
-      languages: {
-        "en-US": `https://thingstodo.id/en-US${canonicalPath}`,
-        "id-ID": `https://thingstodo.id/id-ID${canonicalPath}`,
-      },
-    },
-  };
-}
-
-export default async function Home({ searchParams }: Props) {
-  const activities = await getActivities();
-  const city = searchParams.city as string;
+    fetchActivities();
+  }, []);
 
   const locationOptions = Array.from(
     new Set(activities.map((activity) => activity.location))
@@ -191,6 +107,17 @@ export default async function Home({ searchParams }: Props) {
         (activity) => activity.location.toLowerCase() === city.toLowerCase()
       ).length
     : 0;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading activities...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex flex-col">
@@ -257,5 +184,20 @@ export default async function Home({ searchParams }: Props) {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
