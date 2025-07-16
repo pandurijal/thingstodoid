@@ -50,7 +50,6 @@ const ItineraryGenerator = () => {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [generatedItinerary, setGeneratedItinerary] = useState<ItineraryDay[]>([]);
-  const [downloadingPDF, setDownloadingPDF] = useState(false);
   const itineraryRef = useRef<HTMLDivElement>(null);
 
   const [preferences, setPreferences] = useState<ItineraryPreferences>({
@@ -367,7 +366,6 @@ Rules:
 
   // Download as PDF with custom design
   const downloadPDF = async () => {
-    setDownloadingPDF(true);
     
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -647,8 +645,6 @@ Rules:
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
-    } finally {
-      setDownloadingPDF(false);
     }
   };
 
