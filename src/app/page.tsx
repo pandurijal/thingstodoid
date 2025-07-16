@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import Activities from "./components/Activities";
+import HeroSection from "./components/HeroSection";
+import Sidebar from "./components/Sidebar";
 import { useState, useEffect, Suspense } from "react";
 import { parse } from "papaparse";
 import { useSearchParams } from "next/navigation";
@@ -98,15 +100,6 @@ function HomeContent() {
     fetchActivities();
   }, []);
 
-  const locationOptions = Array.from(
-    new Set(activities.map((activity) => activity.location))
-  ).sort();
-  const totalActivities = activities.length;
-  const cityActivities = city
-    ? activities.filter(
-        (activity) => activity.location.toLowerCase() === city.toLowerCase()
-      ).length
-    : 0;
 
   if (loading) {
     return (
@@ -120,63 +113,55 @@ function HomeContent() {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col">
+    <div className="min-h-screen bg-white">
+      {/* Simple Navigation */}
       <nav className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="w-7xl mx-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-2xl font-bold text-primary">
-              thingstodo<span className="text-sm text-gray-500">.id</span>
+            <Link href="/" className="text-2xl font-bold text-primary-600">
+              thingstodo<span className="text-sm text-neutral-500">.id</span>
             </Link>
-            <div className="text-sm text-gray-500">
-              {totalActivities} activities in {locationOptions.length} locations
+            <div className="flex items-center gap-6">
+              <Link href="/" className="text-primary-600 font-medium">
+                Browse Activities
+              </Link>
+              <Link href="/itinerary" className="text-neutral-600 hover:text-primary-600 transition-colors">
+                Plan Itinerary
+              </Link>
+              <Link href="/esim" className="text-neutral-600 hover:text-primary-600 transition-colors">
+                Travel eSIM
+              </Link>
             </div>
           </div>
         </div>
       </nav>
 
-      <main className="w-7xl mx-8 px-4 sm:px-6 lg:px-8 py-8 flex-grow">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            {city ? (
-              <>
-                Best things to do in{" "}
-                <span className="text-primary underline decoration-wavy decoration-primary/30">
-                  {city}
-                </span>
-                {cityActivities > 0 && (
-                  <span className="block text-lg text-gray-600 mt-2">
-                    {cityActivities} amazing activities to discover
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                Find the best{" "}
-                <span className="text-primary underline decoration-wavy decoration-primary/30">
-                  things to do
-                </span>{" "}
-                in Indonesia
-              </>
-            )}
-          </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            {city
-              ? `Discover amazing activities, cultural experiences, and hidden gems in ${city}`
-              : "Discover amazing activities, cultural experiences, and hidden gems across the Indonesian archipelago"}
-          </p>
-        </div>
+      {/* Hero Section */}
+      <HeroSection 
+        activities={activities} 
+        city={city || undefined}
+      />
 
-        <Activities activities={activities} />
-      </main>
+      {/* Main Content with Right Sidebar */}
+      <div className="flex">
+        {/* Main Content */}
+        <main className="flex-1 max-w-none px-4 sm:px-6 lg:px-8 py-8">
+          <Activities activities={activities} />
+        </main>
+        
+        {/* Right Sidebar */}
+        <Sidebar activities={activities} selectedLocation={city || undefined} />
+      </div>
 
-      <footer className="bg-white border-t border-gray-200 mt-auto">
-        <div className="w-7xl mx-8 px-4 sm:px-6 lg:px-8 py-8">
+      {/* Footer */}
+      <footer className="bg-white border-t border-neutral-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-neutral-600">
                 &copy; {new Date().getFullYear()} ThingsToDo.id
               </p>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-neutral-500 mt-1">
                 Discover the best of Indonesia
               </p>
             </div>

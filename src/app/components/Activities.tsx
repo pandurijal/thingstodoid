@@ -11,6 +11,13 @@ import {
   Tag,
   Loader2,
   ChevronDown,
+  Sun,
+  CloudRain,
+  Users,
+  Heart,
+  Share2,
+  Bookmark,
+  Calendar,
 } from "lucide-react";
 
 type Activity = {
@@ -180,11 +187,46 @@ const CustomSelect = ({
   );
 };
 
+// Enhanced activity type with additional dummy data
+type EnhancedActivity = Activity & {
+  priceRange: '$' | '$$' | '$$$' | 'Free';
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  bestTime: 'Morning' | 'Afternoon' | 'Evening' | 'All Day';
+  crowdLevel: 'Low' | 'Medium' | 'High';
+  weatherSuitable: 'Sunny' | 'Rainy' | 'Any';
+  isBookmarked?: boolean;
+};
+
+// Function to enhance activities with dummy data
+function enhanceActivities(activities: Activity[]): EnhancedActivity[] {
+  const priceRanges: ('$' | '$$' | '$$$' | 'Free')[] = ['Free', '$', '$$', '$$$'];
+  const difficulties: ('Easy' | 'Medium' | 'Hard')[] = ['Easy', 'Medium', 'Hard'];
+  const bestTimes: ('Morning' | 'Afternoon' | 'Evening' | 'All Day')[] = ['Morning', 'Afternoon', 'Evening', 'All Day'];
+  const crowdLevels: ('Low' | 'Medium' | 'High')[] = ['Low', 'Medium', 'High'];
+  const weatherSuitable: ('Sunny' | 'Rainy' | 'Any')[] = ['Sunny', 'Rainy', 'Any'];
+
+  return activities.map((activity, index) => ({
+    ...activity,
+    priceRange: priceRanges[index % priceRanges.length],
+    difficulty: difficulties[index % difficulties.length],
+    bestTime: bestTimes[index % bestTimes.length],
+    crowdLevel: crowdLevels[index % crowdLevels.length],
+    weatherSuitable: weatherSuitable[index % weatherSuitable.length],
+    isBookmarked: Math.random() > 0.8, // 20% chance of being bookmarked
+  }));
+}
+
 export default function Activities({ activities }: { activities: Activity[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [search, setSearch] = useState("");
+  const [enhancedActivities, setEnhancedActivities] = useState<EnhancedActivity[]>([]);
+  
+  // Enhance activities with dummy data
+  useEffect(() => {
+    setEnhancedActivities(enhanceActivities(activities));
+  }, [activities]);
   const [location, setLocation] = useState(() => {
     // Initialize location from URL or default to "all"
     const cityFromUrl = searchParams.get("city");
@@ -194,8 +236,8 @@ export default function Activities({ activities }: { activities: Activity[] }) {
       : "all";
   });
   const [duration, setDuration] = useState("all");
-  const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
-  const [displayedActivities, setDisplayedActivities] = useState<Activity[]>(
+  const [filteredActivities, setFilteredActivities] = useState<EnhancedActivity[]>([]);
+  const [displayedActivities, setDisplayedActivities] = useState<EnhancedActivity[]>(
     []
   );
   const [page, setPage] = useState(1);
@@ -254,7 +296,7 @@ export default function Activities({ activities }: { activities: Activity[] }) {
   useEffect(() => {
     setIsFiltering(true);
     const timeoutId = setTimeout(() => {
-      let filtered = activities;
+      let filtered = enhancedActivities;
 
       if (search) {
         filtered = filtered.filter(
@@ -278,7 +320,7 @@ export default function Activities({ activities }: { activities: Activity[] }) {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [search, location, duration, activities]);
+  }, [search, location, duration, enhancedActivities]);
 
   useEffect(() => {
     if (isFiltering) return;
@@ -331,43 +373,137 @@ export default function Activities({ activities }: { activities: Activity[] }) {
     activity,
     isLast,
   }: {
-    activity: Activity;
+    activity: EnhancedActivity;
     isLast: boolean;
-  }) => (
-    <div
-      ref={isLast ? lastActivityElementRef : null}
-      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
-    >
-      <div className="aspect-video bg-gray-100 relative">
-        <ImageComponent activity={activity} />
-        <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-          {activity.rating}
+  }) => {
+    const [isBookmarked, setIsBookmarked] = useState(activity.isBookmarked || false);
+    
+    const getPriceColor = (price: string) => {
+      switch (price) {
+        case 'Free': return 'text-secondary-600 bg-secondary-50';
+        case '$': return 'text-accent-600 bg-accent-50';
+        case '$$': return 'text-accent-700 bg-accent-100';
+        case '$$$': return 'text-primary-600 bg-primary-50';
+        default: return 'text-neutral-600 bg-neutral-50';
+      }
+    };
+
+    const getDifficultyColor = (difficulty: string) => {
+      switch (difficulty) {
+        case 'Easy': return 'text-secondary-700 bg-secondary-100';
+        case 'Medium': return 'text-accent-700 bg-accent-100';
+        case 'Hard': return 'text-primary-700 bg-primary-100';
+        default: return 'text-neutral-700 bg-neutral-100';
+      }
+    };
+
+    const getCrowdIcon = (level: string) => {
+      const baseClasses = "w-4 h-4";
+      switch (level) {
+        case 'Low': return <Users className={`${baseClasses} text-secondary-600`} />;
+        case 'Medium': return <Users className={`${baseClasses} text-accent-600`} />;
+        case 'High': return <Users className={`${baseClasses} text-primary-600`} />;
+        default: return <Users className={`${baseClasses} text-neutral-600`} />;
+      }
+    };
+
+    const getWeatherIcon = (weather: string) => {
+      switch (weather) {
+        case 'Sunny': return <Sun className="w-4 h-4 text-accent-500" />;
+        case 'Rainy': return <CloudRain className="w-4 h-4 text-neutral-500" />;
+        default: return <Calendar className="w-4 h-4 text-neutral-500" />;
+      }
+    };
+
+    return (
+      <div
+        ref={isLast ? lastActivityElementRef : null}
+        className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-neutral-100 hover:border-neutral-200"
+      >
+        <div className="aspect-video bg-neutral-100 relative overflow-hidden">
+          <ImageComponent activity={activity} />
+          
+          {/* Overlay with actions */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="absolute top-3 right-3 flex gap-2">
+              <button
+                onClick={() => setIsBookmarked(!isBookmarked)}
+                className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+              >
+                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'text-primary-600 fill-primary-600' : 'text-neutral-600'}`} />
+              </button>
+              <button className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors">
+                <Share2 className="w-4 h-4 text-neutral-600" />
+              </button>
+            </div>
+            
+            {/* Quick info overlay */}
+            <div className="absolute bottom-3 left-3 right-3">
+              <div className="flex items-center justify-between">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriceColor(activity.priceRange)}`}>
+                  {activity.priceRange === 'Free' ? 'Free' : activity.priceRange}
+                </span>
+                <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+                  <Star className="w-3 h-3 text-accent-500 fill-accent-500" />
+                  <span className="text-xs font-medium text-neutral-800">{activity.rating}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Static rating badge */}
+          <div className="absolute top-3 right-3 group-hover:opacity-0 transition-opacity duration-300 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full text-sm font-medium flex items-center gap-1 border border-white/50">
+            <Star className="w-4 h-4 text-accent-500 fill-accent-500" />
+            {activity.rating}
+          </div>
         </div>
-      </div>
 
-      <div className="p-4">
-        <h3 className="font-semibold text-lg text-primary">
-          {activity.activity}
-        </h3>
-        <h4 className="text-gray-600 text-xs mb-4 line-clamp-2">
-          {activity.localName}
-        </h4>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-          {activity.description}
-        </p>
+        <div className="p-5">
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="font-bold text-lg text-neutral-900 group-hover:text-primary-700 transition-colors line-clamp-1">
+              {activity.activity}
+            </h3>
+            <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getDifficultyColor(activity.difficulty)}`}>
+              {activity.difficulty}
+            </span>
+          </div>
+          
+          <h4 className="text-neutral-600 text-sm mb-3 line-clamp-1 font-medium">
+            {activity.localName}
+          </h4>
+          
+          <p className="text-neutral-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+            {activity.description}
+          </p>
 
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <MapPin className="w-4 h-4" />
-            <span>{activity.location}</span>
+          {/* Enhanced info grid */}
+          <div className="space-y-3 mb-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="flex items-center gap-2 text-neutral-600">
+                <MapPin className="w-4 h-4 text-primary-500" />
+                <span className="truncate">{activity.location}</span>
+              </div>
+              <div className="flex items-center gap-2 text-neutral-600">
+                <Clock className="w-4 h-4 text-secondary-500" />
+                <span className="truncate">{activity.duration}</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="flex items-center gap-2 text-neutral-600">
+                {getCrowdIcon(activity.crowdLevel)}
+                <span>{activity.crowdLevel} crowd</span>
+              </div>
+              <div className="flex items-center gap-2 text-neutral-600">
+                {getWeatherIcon(activity.weatherSuitable)}
+                <span>{activity.bestTime}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Clock className="w-4 h-4" />
-            <span>{activity.duration}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Tag className="w-4 h-4" />
+
+          {/* Tags */}
+          <div className="flex items-center gap-2 text-sm mb-4">
+            <Tag className="w-4 h-4 text-neutral-400" />
             <div className="flex flex-wrap gap-1">
               {activity.tags
                 .split(" ")
@@ -375,74 +511,85 @@ export default function Activities({ activities }: { activities: Activity[] }) {
                 .map((tag) => (
                   <span
                     key={tag}
-                    className="bg-gray-100 px-2 py-0.5 rounded-full"
+                    className="bg-neutral-100 hover:bg-neutral-200 px-2 py-1 rounded-md text-xs text-neutral-700 transition-colors cursor-pointer"
                   >
                     {tag.replace("#", "")}
                   </span>
                 ))}
             </div>
           </div>
-          <div className="flex justify-end">
+
+          {/* Action buttons */}
+          <div className="flex gap-2">
             <Link
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                 `${activity.activity} ${activity.location}`
               )}`}
               target="_blank"
+              className="flex-1"
             >
-              <button className="bg-primary/90 hover:bg-primary text-white px-4 py-2 rounded-lg sm:mt-4 text-sm">
-                Go To <span className="font-bold">GMaps</span>
+              <button className="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2">
+                <MapPin className="w-4 h-4" />
+                View on Maps
               </button>
             </Link>
+            <button className="px-3 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl transition-colors duration-200">
+              <Heart className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Search and Filters */}
-      <div className="mb-8 space-y-4">
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={20}
-          />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            type="text"
-            placeholder="Search activities, locations, or tags..."
-            className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
+        <div className="space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400"
+              size={20}
+            />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              type="text"
+              placeholder="Search activities, locations, or tags..."
+              className="w-full pl-10 pr-4 py-3 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+            />
+          </div>
+          
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex flex-wrap gap-3">
+              <CustomSelect
+                options={locationOptions}
+                value={location}
+                onChange={handleLocationChange}
+                className="min-w-[180px]"
+              />
+              <CustomSelect
+                options={durationOptions}
+                value={duration}
+                onChange={setDuration}
+                className="min-w-[180px]"
+              />
+            </div>
+            
+            {/* Results Count */}
+            <div className="text-sm text-neutral-600 bg-neutral-50 px-4 py-2 rounded-full">
+              <span className="font-medium">{displayedActivities.length}</span> of{" "}
+              <span className="font-medium">{filteredActivities.length}</span> activities
+              {location !== "all" &&
+                ` in ${
+                  locationOptions.find((opt) => opt.value === location)?.label
+                }`}
+            </div>
+          </div>
         </div>
-
-        <div className="flex flex-wrap gap-4">
-          <CustomSelect
-            options={locationOptions}
-            value={location}
-            onChange={handleLocationChange}
-            className="w-full sm:w-auto min-w-[200px]"
-          />
-          <CustomSelect
-            options={durationOptions}
-            value={duration}
-            onChange={setDuration}
-            className="w-full sm:w-auto min-w-[200px]"
-          />
-        </div>
-      </div>
-
-      {/* Results Count */}
-      <div className="mb-6">
-        <p className="text-gray-600">
-          Showing {displayedActivities.length} of {filteredActivities.length}{" "}
-          activities
-          {location !== "all" &&
-            ` in ${
-              locationOptions.find((opt) => opt.value === location)?.label
-            }`}
-        </p>
       </div>
 
       {/* Activity Cards */}
@@ -458,24 +605,40 @@ export default function Activities({ activities }: { activities: Activity[] }) {
 
       {/* Loading State */}
       {(loading || isFiltering) && (
-        <div className="flex justify-center items-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex flex-col justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-600 mb-3" />
+          <p className="text-neutral-600">Loading amazing activities...</p>
         </div>
       )}
 
       {/* No Results State */}
       {!loading && !isFiltering && displayedActivities.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">
-            No activities found matching your criteria
+        <div className="text-center py-16">
+          <div className="bg-neutral-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <Search className="w-8 h-8 text-neutral-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-neutral-800 mb-2">No activities found</h3>
+          <p className="text-neutral-600 mb-6">
+            Try adjusting your filters or search terms to discover more activities
           </p>
+          <button 
+            onClick={() => {
+              setLocation("all");
+              setDuration("all");
+              setSearch("");
+            }}
+            className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl transition-colors"
+          >
+            Clear All Filters
+          </button>
         </div>
       )}
 
       {/* End of Results */}
       {!hasMore && displayedActivities.length > 0 && (
         <div className="text-center py-8">
-          <p className="text-gray-500">No more activities to load</p>
+          <div className="w-12 h-1 bg-neutral-200 rounded-full mx-auto mb-3"></div>
+          <p className="text-neutral-500">You&apos;ve seen all activities</p>
         </div>
       )}
     </div>
