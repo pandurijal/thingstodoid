@@ -9,6 +9,7 @@ import JsonLd from '@/app/components/JsonLd';
 import HeroSection from '@/app/components/HeroSection';
 import Activities from '@/app/components/Activities';
 import Sidebar from '@/app/components/Sidebar';
+import InternalLinksFooter from '@/app/components/InternalLinksFooter';
 
 export async function generateStaticParams() {
   const activities = await loadActivitiesServer();
@@ -93,6 +94,9 @@ export default async function CityPage({
 
         <Sidebar activities={formattedActivities} selectedLocation={cityName} />
       </div>
+
+      {/* Internal Links Footer */}
+      <InternalLinksFooter />
 
       {/* Footer */}
       <footer className="bg-white border-t border-neutral-200">

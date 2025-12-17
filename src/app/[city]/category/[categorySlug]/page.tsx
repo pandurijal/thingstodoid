@@ -6,6 +6,7 @@ import { generateCityCategoryMetadata } from '@/lib/metadata';
 import Navigation from '@/app/components/Navigation';
 import Breadcrumbs from '@/app/components/Breadcrumbs';
 import Activities from '@/app/components/Activities';
+import InternalLinksFooter from '@/app/components/InternalLinksFooter';
 
 export async function generateStaticParams() {
   const activities = await loadActivitiesServer();
@@ -114,6 +115,9 @@ export default async function CityCategoryPage({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Activities activities={formattedActivities} />
       </div>
+
+      {/* Internal Links Footer */}
+      <InternalLinksFooter />
 
       {/* Footer */}
       <footer className="bg-white border-t border-neutral-200 mt-12">

@@ -10,7 +10,6 @@
     "export": "next build"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@hello-pangea/dnd": "^18.0.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",

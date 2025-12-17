@@ -3,6 +3,7 @@ import Link from "next/link";
 import Activities from "./components/Activities";
 import HeroSection from "./components/HeroSection";
 import Sidebar from "./components/Sidebar";
+import InternalLinksFooter from "./components/InternalLinksFooter";
 import { useState, useEffect, Suspense } from "react";
 import { parse } from "papaparse";
 import { useSearchParams } from "next/navigation";
@@ -152,6 +153,9 @@ function HomeContent() {
         {/* Right Sidebar */}
         <Sidebar activities={activities} selectedLocation={city || undefined} />
       </div>
+
+      {/* Internal Links Footer */}
+      <InternalLinksFooter />
 
       {/* Footer */}
       <footer className="bg-white border-t border-neutral-200">

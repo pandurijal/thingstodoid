@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import InternalLinksFooter from "../components/InternalLinksFooter";
 import {
   Check,
   Zap,
@@ -308,6 +309,9 @@ const ESIMPage = () => {
           </div>
         </div>
       )}
+
+      {/* Internal Links Footer */}
+      <InternalLinksFooter />
 
       {/* Footer */}
       <footer className="bg-white border-t border-neutral-200">

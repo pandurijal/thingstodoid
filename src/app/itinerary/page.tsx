@@ -2,9 +2,9 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { parse } from "papaparse";
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import jsPDF from 'jspdf';
+import InternalLinksFooter from "../components/InternalLinksFooter";
 import {
   Clock,
   Star,
@@ -142,16 +142,12 @@ const ItineraryGenerator = () => {
       }));
 
       // Check if API key is available
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      const apiKey = process.env.NEXT_PUBLIC_ARK_API_KEY;
       if (!apiKey) {
-        throw new Error('Gemini API key not configured. Please set NEXT_PUBLIC_GEMINI_API_KEY environment variable.');
+        throw new Error('Ark API key not configured. Please set NEXT_PUBLIC_ARK_API_KEY environment variable.');
       }
 
-      // Initialize Gemini AI
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-      // Create prompt for Gemini
+      // Create prompt for AI
       const prompt = `You are a travel expert specializing in Indonesia. Create a ${preferences.duration}-day itinerary for ${preferences.destination} based on these preferences:
 
 - Travelers: ${preferences.travelers} ${preferences.travelers === 1 ? 'person' : 'people'}
@@ -194,10 +190,30 @@ Rules:
 6. Generate exactly ${preferences.duration} days
 7. Return ONLY the JSON, no additional text`;
 
-      // Call Gemini API directly from client
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      // Call BytePlus Ark API via fetch
+      const result = await fetch('https://ark.ap-southeast.bytepluses.com/api/v3/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'seed-1-6-250915',
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ]
+        })
+      });
+
+      if (!result.ok) {
+        throw new Error(`API Error: ${result.status} ${result.statusText}`);
+      }
+
+      const response = await result.json();
+      const text = response.choices[0].message.content;
       
       // Parse the AI response and format it
       let aiItinerary;
@@ -251,10 +267,10 @@ Rules:
       if (error instanceof Error) {
         if (error.message.includes('API key not configured')) {
           errorMessage += 'API key not configured properly.';
-        } else if (error.message.includes('API_KEY_INVALID')) {
-          errorMessage += 'Invalid API key. Please check your Gemini API key.';
-        } else if (error.message.includes('QUOTA_EXCEEDED')) {
-          errorMessage += 'API quota exceeded. Please try again later.';
+        } else if (error.message.includes('401') || error.message.includes('403')) {
+          errorMessage += 'Invalid API key or unauthorized access.';
+        } else if (error.message.includes('429')) {
+          errorMessage += 'API quota exceeded or rate limited. Please try again later.';
         } else if (error.message.includes('network') || error.message.includes('fetch')) {
           errorMessage += 'Network error. Please check your internet connection.';
         } else {
@@ -1002,6 +1018,25 @@ Rules:
           </div>
         </div>
       </div>
+
+      {/* Internal Links Footer */}
+      <InternalLinksFooter />
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-neutral-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-center md:text-left">
+              <p className="text-sm text-neutral-600">
+                &copy; {new Date().getFullYear()} ThingsToDo.id
+              </p>
+              <p className="text-sm text-neutral-500 mt-1">
+                Discover the best of Indonesia
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
