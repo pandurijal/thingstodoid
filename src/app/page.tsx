@@ -146,7 +146,7 @@ function HomeContent() {
       <div className="flex">
         {/* Main Content */}
         <main className="flex-1 max-w-none px-4 sm:px-6 lg:px-8 py-8">
-          <Activities activities={activities} />
+          <Activities activities={activities} initialLocation={city || "all"} />
         </main>
         
         {/* Right Sidebar */}

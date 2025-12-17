@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Star,
@@ -39,14 +39,23 @@ type SelectOption = {
 
 const ITEMS_PER_PAGE = 9;
 
-const locationOptions: SelectOption[] = [
-  { value: "all", label: "All Locations" },
-  { value: "Bali", label: "Bali" },
-  { value: "Jakarta", label: "Jakarta" },
-  { value: "Yogyakarta", label: "Yogyakarta" },
-  { value: "Lombok", label: "Lombok" },
-  { value: "Surabaya", label: "Surabaya" },
-];
+// Helper to extract unique locations from activities
+function getLocationOptions(activities: Activity[]): SelectOption[] {
+  const uniqueLocations = new Set<string>();
+
+  activities.forEach(activity => {
+    // Extract city from location field (last part after comma, or the whole string)
+    const parts = activity.location.split(',');
+    const city = parts.length > 1 ? parts[parts.length - 1].trim() : activity.location.trim();
+    uniqueLocations.add(city);
+  });
+
+  const locationArray = Array.from(uniqueLocations)
+    .sort()
+    .map(city => ({ value: city, label: city }));
+
+  return [{ value: "all", label: "All Locations" }, ...locationArray];
+}
 
 const durationOptions: SelectOption[] = [
   { value: "all", label: "All Durations" },
@@ -216,25 +225,29 @@ function enhanceActivities(activities: Activity[]): EnhancedActivity[] {
   }));
 }
 
-export default function Activities({ activities }: { activities: Activity[] }) {
+interface ActivitiesProps {
+  activities: Activity[];
+  initialLocation?: string; // Allow parent to set initial location
+}
+
+export default function Activities({ activities, initialLocation = "all" }: ActivitiesProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [search, setSearch] = useState("");
   const [enhancedActivities, setEnhancedActivities] = useState<EnhancedActivity[]>([]);
-  
+  const [locationOptions, setLocationOptions] = useState<SelectOption[]>([]);
+
+  // Generate location options from activities
+  useEffect(() => {
+    setLocationOptions(getLocationOptions(activities));
+  }, [activities]);
+
   // Enhance activities with dummy data
   useEffect(() => {
     setEnhancedActivities(enhanceActivities(activities));
   }, [activities]);
-  const [location, setLocation] = useState(() => {
-    // Initialize location from URL or default to "all"
-    const cityFromUrl = searchParams.get("city");
-    return cityFromUrl &&
-      locationOptions.some((opt) => opt.value === cityFromUrl)
-      ? cityFromUrl
-      : "all";
-  });
+
+  const [location, setLocation] = useState(initialLocation);
   const [duration, setDuration] = useState("all");
   const [filteredActivities, setFilteredActivities] = useState<EnhancedActivity[]>([]);
   const [displayedActivities, setDisplayedActivities] = useState<EnhancedActivity[]>(
@@ -252,29 +265,29 @@ export default function Activities({ activities }: { activities: Activity[] }) {
   const handleLocationChange = (newLocation: string) => {
     setLocation(newLocation);
 
-    // Update URL
-    const params = new URLSearchParams(searchParams);
+    // Navigate to city page instead of using query params
     if (newLocation === "all") {
-      params.delete("city");
+      router.push("/");
     } else {
-      params.set("city", newLocation);
+      // Convert city name to slug (lowercase)
+      const citySlug = newLocation.toLowerCase();
+      router.push(`/${citySlug}`);
     }
-
-    router.push(`?${params.toString()}`, { scroll: false });
   };
 
-  // Handle URL changes
+  // Sync location with initialLocation prop and validate against available options
   useEffect(() => {
-    const cityFromUrl = searchParams.get("city");
-    if (
-      cityFromUrl &&
-      locationOptions.some((opt) => opt.value === cityFromUrl)
-    ) {
-      setLocation(cityFromUrl);
-    } else if (!cityFromUrl && location !== "all") {
-      setLocation("all");
+    if (locationOptions.length > 0) {
+      // Check if initialLocation exists in options
+      const isValid = locationOptions.some(opt => opt.value === initialLocation);
+      if (isValid) {
+        setLocation(initialLocation);
+      } else {
+        // If not found, default to "all"
+        setLocation("all");
+      }
     }
-  }, [searchParams, location]);
+  }, [initialLocation, locationOptions]);
 
   const observer = useRef<IntersectionObserver>();
   const lastActivityElementRef = useCallback(

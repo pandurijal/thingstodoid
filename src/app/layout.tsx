@@ -75,7 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-<script src="https://umami-pr.up.railway.app/script.js" data-website-id="44e74969-57d4-45f2-af83-afceefa87fbc"></script>
+<script async src="https://umami-pr.up.railway.app/script.js" data-website-id="44e74969-57d4-45f2-af83-afceefa87fbc"></script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
