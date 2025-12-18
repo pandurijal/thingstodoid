@@ -141,98 +141,25 @@ const ItineraryGenerator = () => {
         tags: activity.tags
       }));
 
-      // Check if API key is available
-      const apiKey = process.env.NEXT_PUBLIC_ARK_API_KEY;
-      if (!apiKey) {
-        throw new Error('Ark API key not configured. Please set NEXT_PUBLIC_ARK_API_KEY environment variable.');
-      }
-
-      // Create prompt for AI
-      const prompt = `You are a travel expert specializing in Indonesia. Create a ${preferences.duration}-day itinerary for ${preferences.destination} based on these preferences:
-
-- Travelers: ${preferences.travelers} ${preferences.travelers === 1 ? 'person' : 'people'}
-- Budget: ${preferences.budget}
-- Interests: ${preferences.interests.join(', ') || 'General sightseeing'}
-- Pace: ${preferences.pace} (${preferences.pace === 'relaxed' ? '2-3' : preferences.pace === 'moderate' ? '3-4' : '4-5'} activities per day)
-
-Available activities:
-${activitiesData.map(a => `- ${a.name} (${a.localName}) - ${a.description} | Duration: ${a.duration} | Rating: ${a.rating} | Tags: ${a.tags}`).join('\n')}
-
-Please create a detailed itinerary in JSON format with this structure:
-{
-  "itinerary": [
-    {
-      "day": 1,
-      "date": "Monday, December 16",
-      "theme": "Cultural Discovery",
-      "activities": [
-        {
-          "id": "activity_id",
-          "activity": "Activity Name",
-          "localName": "Local Name",
-          "description": "Description",
-          "location": "Location",
-          "duration": "Duration",
-          "rating": 4.5,
-          "tags": "tags"
-        }
-      ]
-    }
-  ]
-}
-
-Rules:
-1. Use ONLY activities from the provided list
-2. Select activities that match the interests and budget
-3. Ensure logical flow and proximity for each day
-4. Vary the themes across days
-5. Respect the pace preference
-6. Generate exactly ${preferences.duration} days
-7. Return ONLY the JSON, no additional text`;
-
-      // Call BytePlus Ark API via fetch
-      const result = await fetch('https://ark.ap-southeast.bytepluses.com/api/v3/chat/completions', {
+      // Call secure API route (API key stays on server)
+      const result = await fetch('/api/generate-itinerary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'seed-1-6-250915',
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ]
+          preferences,
+          activities: activitiesData
         })
       });
 
       if (!result.ok) {
-        throw new Error(`API Error: ${result.status} ${result.statusText}`);
+        const errorData = await result.json();
+        throw new Error(errorData.error || `API Error: ${result.status} ${result.statusText}`);
       }
 
       const response = await result.json();
-      const text = response.choices[0].message.content;
-      
-      // Parse the AI response and format it
-      let aiItinerary;
-      try {
-        // Try to parse the response directly
-        aiItinerary = JSON.parse(text);
-      } catch {
-        // Fallback to regex parsing if JSON parsing fails
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            aiItinerary = JSON.parse(jsonMatch[0]);
-          } catch {
-            throw new Error('Invalid AI response format');
-          }
-        } else {
-          throw new Error('No valid JSON found in AI response');
-        }
-      }
+      const aiItinerary = response;
 
       // Format the itinerary data
       const formattedItinerary: ItineraryDay[] = aiItinerary.itinerary.map((day: { theme?: string; activities: Activity[] }, index: number) => ({
