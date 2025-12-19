@@ -22,11 +22,12 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { city: string; activitySlug: string };
+  params: Promise<{ city: string; activitySlug: string }>;
 }): Promise<Metadata> {
+  const { city, activitySlug } = await params;
   const activities = await loadActivitiesServer();
   const activity = activities.find(
-    (a) => a.citySlug === params.city && generateSlug(a.activity) === params.activitySlug
+    (a) => a.citySlug === city && generateSlug(a.activity) === activitySlug
   );
 
   if (!activity) {
@@ -41,11 +42,12 @@ export async function generateMetadata({
 export default async function ActivityPage({
   params,
 }: {
-  params: { city: string; activitySlug: string };
+  params: Promise<{ city: string; activitySlug: string }>;
 }) {
+  const { city, activitySlug } = await params;
   const activities = await loadActivitiesServer();
   const activity = activities.find(
-    (a) => a.citySlug === params.city && generateSlug(a.activity) === params.activitySlug
+    (a) => a.citySlug === city && generateSlug(a.activity) === activitySlug
   );
 
   if (!activity) {
@@ -70,7 +72,7 @@ export default async function ActivityPage({
         items={[
           { label: 'Home', href: '/' },
           { label: activity.city, href: `/${activity.citySlug}` },
-          { label: activity.activity, href: `/${activity.citySlug}/${params.activitySlug}` },
+          { label: activity.activity, href: `/${activity.citySlug}/${activitySlug}` },
         ]}
       />
 

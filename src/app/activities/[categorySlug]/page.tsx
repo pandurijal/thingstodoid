@@ -21,11 +21,12 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { categorySlug: string };
+  params: Promise<{ categorySlug: string }>;
 }): Promise<Metadata> {
+  const { categorySlug } = await params;
   const activities = await loadActivitiesServer();
   const categoryActivities = activities.filter((a) =>
-    a.categorySlugs.includes(params.categorySlug)
+    a.categorySlugs.includes(categorySlug)
   );
 
   if (categoryActivities.length === 0) {
@@ -34,24 +35,25 @@ export async function generateMetadata({
     };
   }
 
-  return generateCategoryMetadata(params.categorySlug, categoryActivities);
+  return generateCategoryMetadata(categorySlug, categoryActivities);
 }
 
 export default async function CategoryPage({
   params,
 }: {
-  params: { categorySlug: string };
+  params: Promise<{ categorySlug: string }>;
 }) {
+  const { categorySlug } = await params;
   const activities = await loadActivitiesServer();
   const categoryActivities = activities.filter((a) =>
-    a.categorySlugs.includes(params.categorySlug)
+    a.categorySlugs.includes(categorySlug)
   );
 
   if (categoryActivities.length === 0) {
     notFound();
   }
 
-  const categoryName = formatCategoryName(params.categorySlug);
+  const categoryName = formatCategoryName(categorySlug);
   const citiesWithActivities = groupByCity(categoryActivities);
   const cityCount = Object.keys(citiesWithActivities).length;
 
@@ -74,7 +76,7 @@ export default async function CategoryPage({
       <Breadcrumbs
         items={[
           { label: 'Home', href: '/' },
-          { label: categoryName, href: `/activities/${params.categorySlug}` },
+          { label: categoryName, href: `/activities/${categorySlug}` },
         ]}
       />
 
@@ -102,7 +104,7 @@ export default async function CategoryPage({
                 return (
                   <Link
                     key={city}
-                    href={`/${citySlug}/category/${params.categorySlug}`}
+                    href={`/${citySlug}/category/${categorySlug}`}
                     className="block p-6 bg-white border border-neutral-200 rounded-xl hover:shadow-lg hover:border-primary-300 transition-all duration-200"
                   >
                     <h3 className="text-lg font-semibold text-neutral-900 mb-2">

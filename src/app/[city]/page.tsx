@@ -23,10 +23,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { city: string };
+  params: Promise<{ city: string }>;
 }): Promise<Metadata> {
+  const { city } = await params;
   const activities = await loadActivitiesServer();
-  const cityActivities = activities.filter((a) => a.citySlug === params.city);
+  const cityActivities = activities.filter((a) => a.citySlug === city);
 
   if (cityActivities.length === 0) {
     return {
@@ -35,16 +36,17 @@ export async function generateMetadata({
   }
 
   const cityName = cityActivities[0].city;
-  return generateCityMetadata(cityName, params.city, cityActivities);
+  return generateCityMetadata(cityName, city, cityActivities);
 }
 
 export default async function CityPage({
   params,
 }: {
-  params: { city: string };
+  params: Promise<{ city: string }>;
 }) {
+  const { city } = await params;
   const activities = await loadActivitiesServer();
-  const cityActivities = activities.filter((a) => a.citySlug === params.city);
+  const cityActivities = activities.filter((a) => a.citySlug === city);
 
   if (cityActivities.length === 0) {
     notFound();
@@ -72,7 +74,7 @@ export default async function CityPage({
       <Breadcrumbs
         items={[
           { label: 'Home', href: '/' },
-          { label: cityName, href: `/${params.city}` },
+          { label: cityName, href: `/${city}` },
         ]}
       />
 

@@ -37,11 +37,12 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { city: string; categorySlug: string };
+  params: Promise<{ city: string; categorySlug: string }>;
 }): Promise<Metadata> {
+  const { city, categorySlug } = await params;
   const activities = await loadActivitiesServer();
   const filtered = activities.filter(
-    (a) => a.citySlug === params.city && a.categorySlugs.includes(params.categorySlug)
+    (a) => a.citySlug === city && a.categorySlugs.includes(categorySlug)
   );
 
   if (filtered.length === 0) {
@@ -53,8 +54,8 @@ export async function generateMetadata({
   const cityName = filtered[0].city;
   return generateCityCategoryMetadata(
     cityName,
-    params.city,
-    params.categorySlug,
+    city,
+    categorySlug,
     filtered
   );
 }
@@ -62,11 +63,12 @@ export async function generateMetadata({
 export default async function CityCategoryPage({
   params,
 }: {
-  params: { city: string; categorySlug: string };
+  params: Promise<{ city: string; categorySlug: string }>;
 }) {
+  const { city, categorySlug } = await params;
   const activities = await loadActivitiesServer();
   const filtered = activities.filter(
-    (a) => a.citySlug === params.city && a.categorySlugs.includes(params.categorySlug)
+    (a) => a.citySlug === city && a.categorySlugs.includes(categorySlug)
   );
 
   if (filtered.length === 0) {
@@ -74,7 +76,7 @@ export default async function CityCategoryPage({
   }
 
   const cityName = filtered[0].city;
-  const categoryName = formatCategoryName(params.categorySlug);
+  const categoryName = formatCategoryName(categorySlug);
 
   // Convert to format expected by Activities component
   const formattedActivities = filtered.map((a) => ({
@@ -95,8 +97,8 @@ export default async function CityCategoryPage({
       <Breadcrumbs
         items={[
           { label: 'Home', href: '/' },
-          { label: cityName, href: `/${params.city}` },
-          { label: categoryName, href: `/${params.city}/category/${params.categorySlug}` },
+          { label: cityName, href: `/${city}` },
+          { label: categoryName, href: `/${city}/category/${categorySlug}` },
         ]}
       />
 
