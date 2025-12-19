@@ -96,6 +96,10 @@ Rules:
         model: 'deepseek-v3-1-250821',
         messages: [
           {
+            role: 'system',
+            content: 'You are a helpful travel planning assistant. Always respond with valid JSON.'
+          },
+          {
             role: 'user',
             content: prompt
           }
