@@ -61,9 +61,6 @@ export const metadata: Metadata = {
     description: "Discover amazing activities, plan your perfect itinerary, and stay connected with eSIM across Indonesia.",
     images: ["https://thingstodo.id/twitter-image.jpg"],
   },
-  verification: {
-    google: "your-google-verification-code",
-  },
   category: "travel",
 };
 
