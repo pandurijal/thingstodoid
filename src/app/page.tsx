@@ -81,15 +81,7 @@ function HomeContent() {
           };
         });
 
-        // Sort by rating first to get top-rated items
-        const sortedActivities = activitiesData.sort((a, b) => b.rating - a.rating);
-
-        // Get top 30% of activities to maintain quality
-        const topActivitiesCount = Math.ceil(sortedActivities.length * 0.3);
-        const topActivities = sortedActivities.slice(0, topActivitiesCount);
-
-        // Randomize only the top-rated activities
-        setActivities(shuffleArray(topActivities));
+        setActivities(shuffleArray(activitiesData));
       } catch (error) {
         console.error("Error loading activities:", error);
         setActivities([]);

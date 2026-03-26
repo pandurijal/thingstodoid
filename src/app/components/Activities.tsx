@@ -19,6 +19,8 @@ import {
   Bookmark,
   Calendar,
 } from "lucide-react";
+import { extractCity } from "@/lib/data-processing";
+import { CITIES } from "@/lib/constants";
 
 type Activity = {
   id: string;
@@ -40,21 +42,11 @@ type SelectOption = {
 const ITEMS_PER_PAGE = 9;
 
 // Helper to extract unique locations from activities
-function getLocationOptions(activities: Activity[]): SelectOption[] {
-  const uniqueLocations = new Set<string>();
-
-  activities.forEach(activity => {
-    // Extract city from location field (last part after comma, or the whole string)
-    const parts = activity.location.split(',');
-    const city = parts.length > 1 ? parts[parts.length - 1].trim() : activity.location.trim();
-    uniqueLocations.add(city);
-  });
-
-  const locationArray = Array.from(uniqueLocations)
-    .sort()
-    .map(city => ({ value: city, label: city }));
-
-  return [{ value: "all", label: "All Locations" }, ...locationArray];
+function getLocationOptions(): SelectOption[] {
+  return [
+    { value: "all", label: "All Locations" },
+    ...CITIES.map(city => ({ value: city, label: city })),
+  ];
 }
 
 const durationOptions: SelectOption[] = [
@@ -239,7 +231,7 @@ export default function Activities({ activities, initialLocation = "all" }: Acti
 
   // Generate location options from activities
   useEffect(() => {
-    setLocationOptions(getLocationOptions(activities));
+    setLocationOptions(getLocationOptions());
   }, [activities]);
 
   // Enhance activities with dummy data
